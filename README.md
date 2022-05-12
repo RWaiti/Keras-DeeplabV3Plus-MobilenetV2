@@ -1,5 +1,6 @@
 # Keras implementation of DeepLabV3+ with MobileNetV2 backbone
 
+![cityscapes_img_1](images/dice-spacity-6.png "cityscapes predict")
 
 1.  **Rethinking Atrous Convolution for Semantic Image Segmentation**<br />
     Liang-Chieh Chen, George Papandreou, Florian Schroff, Hartwig Adam.<br />
