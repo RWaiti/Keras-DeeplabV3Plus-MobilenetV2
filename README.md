@@ -2,7 +2,7 @@
 
 | IMAGE | TRUE_MASK | PRED MASK <br/> mIoU: .56 | IMG + PRED MASK |
 | :---: | :-------: | :-------: | :--------: |
-| ![cityscapes_img_1](images/dice-spacity-6_1.png "Cityscapes Image") | ![cityscapes_img_2](images/dice-spacity-6_2.png "Cityscapes True Mask") | ![cityscapes_img_3](images/dice-spacity-6_3.png "Cityscapes Pred Mask") | ![cityscapes_img_4](images/dice-spacity-6_4.png "Cityscapes Image + Pred Mask") |
+| <img src="images/dice-spacity-6_1.png" width="99%"/> | <img src="images/dice-spacity-6_2.png" width="86%"/> | <img src="images/dice-spacity-6_3.png" width="100%"/> | <img src="images/dice-spacity-6_4.png" width="100%"/> |
 
 Epoch 57: val_loss improved from 0.09650 to 0.09584, saving model to model-saved/dice_city_spacity_6.hdf5 <br/>
 1488/1488 [==============================] - 854s 574ms/step <br/>
