@@ -79,9 +79,9 @@ class CitySequence(tf.keras.utils.Sequence):
                                                              int(mask.shape[1] // 1.2)),
                                                       seed=seed).numpy()
             mask = cv2.resize(mask, (self.image_size, self.image_size),
-                              interpolation=cv2.INTER_NEAREST)
+                              interpolation=cv2.INTER_NEAREST).astype(np.int32)
 
-            mask[mask >= self.num_classes] = 0
+            mask[mask >= self.num_classes] = self.num_classes
 
             # Augmentation
             images[i], masks[i] = self.augmentation(img, np.expand_dims(mask, -1))
@@ -99,6 +99,7 @@ class CitySequence(tf.keras.utils.Sequence):
 
                 for j, weight in zip(aux_classes, weights_vector):
                     sample_weight[masks[i] == int(j)] = weight
+                sample_weight[masks[i] >= self.num_classes] = 0
             else:
                 sample_weight = np.zeros(masks[i].shape)
 

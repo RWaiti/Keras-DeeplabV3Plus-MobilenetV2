@@ -4,10 +4,10 @@
 | :---: | :-------: | :-------: | :--------: |
 | <img src="images/dice-spacity-6_1.png" width="99%"/> | <img src="images/dice-spacity-6_2.png" width="86%"/> | <img src="images/dice-spacity-6_3.png" width="100%"/> | <img src="images/dice-spacity-6_4.png" width="100%"/> |
 
-Epoch 57: val_loss improved from 0.09650 to 0.09584, saving model to model-saved/dice_city_spacity_6.hdf5 <br/>
-1488/1488 [==============================] - 854s 574ms/step <br/>
-loss: 0.0860 - dice_accuracy_ignoring_last_label: 0.9190 - sparse_accuracy_ignoring_last_label: 0.8966 <br/> 
-val_loss: 0.0958 - val_dice_accuracy_ignoring_last_label: 0.9091 - val_sparse_accuracy_ignoring_last_label: 0.8839
+Epoch 59: val_loss improved from 0.09584 to 0.09553, saving model to model-saved/dice_city_spacity_6.hdf5 <br/>
+1488/1488 [==============================] - 858s 576ms/step <br/>
+loss: 0.0857 - dice_accuracy_ignoring_last_label: 0.9191 - sparse_accuracy_ignoring_last_label: 0.8967 <br/>
+val_loss: 0.0955 - val_dice_accuracy_ignoring_last_label: 0.9093 - val_sparse_accuracy_ignoring_last_label: 0.8841
 
 I'm still running, on my cpu, really slow...
 

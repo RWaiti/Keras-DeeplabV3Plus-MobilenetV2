@@ -8,9 +8,9 @@ import datetime
 def sparse_crossentropy_ignoring_last_label(y_true, y_pred):
     nb_classes = K.int_shape(y_pred)[-1]
     y_true = K.one_hot(
-        tf.cast(y_true[:, :, :, 0], tf.int32), nb_classes)
+        tf.cast(y_true[:, :, :, 0], tf.int32), nb_classes + 1)[:, :, :, :-1]
 
-    loss = tf.nn.softmax_cross_entropy_with_logits(y_true, y_pred)
+    loss = K.categorical_crossentropy(y_true, y_pred)
     loss = K.mean(loss, axis=[1, 2])
     return loss
 
@@ -25,20 +25,19 @@ def sparse_accuracy_ignoring_last_label(y_true, y_pred):
 # MODIFIED FROM https://github.com/Golbstein/Keras-segmentation-deeplab-v3.1/blob/master/utils.py
 
 
-def dice_accuracy_ignoring_last_label(y_true, y_pred):
+def dice_accuracy_ignoring_last_label(y_true, y_pred, smooth=1.):
     nb_classes = K.int_shape(y_pred)[-1]
+
     y_true = K.one_hot(
-        tf.cast(y_true[:, :, :, 0], tf.int32), nb_classes)
+        tf.cast(y_true[:, :, :, 0], tf.int32), nb_classes + 1)[:, :, :, :-1]
 
     y_true = K.batch_flatten(y_true)
     y_pred = K.batch_flatten(y_pred)
 
-    smooth = 1.0
+    numerator = 2. * K.sum(y_true * y_pred, axis=-1)
+    denominator = K.sum(K.square(y_true), axis=-1) + K.sum(K.square(y_pred), axis=-1)
 
-    numerator = 2. * K.sum(y_true * y_pred, axis=-1) + smooth
-    denominator = K.sum(K.square(y_true), axis=-1) + K.sum(K.square(y_pred), axis=-1) + smooth
-
-    return numerator / denominator
+    return (numerator + smooth) / (denominator + smooth)
 
 
 def dice_loss_ignoring_last_label(y_true, y_pred):
@@ -88,7 +87,8 @@ class Model():
         loss_2 = dice_loss_ignoring_last_label
         loss_4 = sce_dice_loss
 
-        accuracy_1 = {"sparse_accuracy": sparse_accuracy_ignoring_last_label}
+        accuracy_1 = {"dice_accuracy": dice_accuracy_ignoring_last_label,
+                      "sparse_accuracy": sparse_accuracy_ignoring_last_label}
         accuracy_2 = {"dice_accuracy": dice_accuracy_ignoring_last_label,
                       "sparse_accuracy": sparse_accuracy_ignoring_last_label}
         accuracy_4 = {"sparse_accuracy": sparse_accuracy_ignoring_last_label,
