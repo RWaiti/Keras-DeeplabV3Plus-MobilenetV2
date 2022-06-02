@@ -1,6 +1,6 @@
 # Keras implementation of DeepLabV3+ with MobileNetV2 backbone for IFB undegraduate thesis <br/>
-## A low budget Wheelchair and Image Segmentation to decrease danger <br/>
-## Normal Wheelchair + 2x DC Motor -> electric Wheelchair <br/>
+## Low budget Wheelchair and Image Segmentation to decrease danger <br/>
+## Normal Wheelchair + 2x DC Motor to electric Wheelchair <br/>
 ## Raspberry Pi + Camera + tflite
 
 ## DataSet: CityScapes <br/>
