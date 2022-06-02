@@ -1,15 +1,31 @@
-# Keras implementation of DeepLabV3+ with MobileNetV2 backbone
+# Keras implementation of DeepLabV3+ with MobileNetV2 backbone for IFB undegraduate thesis <br/>
+## A low budget Wheelchair and Image Segmentation to decrease danger <br/>
+## Normal Wheelchair + 2x DC Motor -> electric Wheelchair <br/>
+## Raspberry Pi + Camera + tflite
 
-| IMAGE | TRUE_MASK | PRED MASK <br/> mIoU: .56 | IMG + PRED MASK |
-| :---: | :-------: | :-------: | :--------: |
-| <img src="images/dice-spacity-6_1.png" width="99%"/> | <img src="images/dice-spacity-6_2.png" width="86%"/> | <img src="images/dice-spacity-6_3.png" width="100%"/> | <img src="images/dice-spacity-6_4.png" width="100%"/> |
+## DataSet: CityScapes <br/>
+*Cityscapes dataset gtFine + (gtFine + fog), (gtfine + rain)*
 
-Epoch 59: val_loss improved from 0.09584 to 0.09553, saving model to model-saved/dice_city_spacity_6.hdf5 <br/>
-1488/1488 [==============================] - 858s 576ms/step <br/>
-loss: 0.0857 - dice_accuracy_ignoring_last_label: 0.9191 - sparse_accuracy_ignoring_last_label: 0.8967 <br/>
-val_loss: 0.0955 - val_dice_accuracy_ignoring_last_label: 0.9093 - val_sparse_accuracy_ignoring_last_label: 0.8841
+*This model takes different MobileNetV2 layers, for better performance on a Raspberry Pi* <br/>
+*With an image of size (256, 256) we have* <br/>
+*MbV2 output = block_12_project_BN (None, 16, 16, 96)* <br/>
+*MbV2 features = block_2_project_BN (None, 64, 64, 24)* <br/>
+*and a output stride of 4*
 
-I'm still running, on my cpu, really slow...
+*Total params: 825,954* <br/>
+*Trainable params: 807,682* <br/>
+*Non-trainable params: 18,272*
+
+## mIOU and plots <br/>
+*Mean of all validation images mIOU = .97*
+
+![binary .96](images/binary_rain_fog_1.png)
+
+![binary .98](images/binary_rain_fog_2.png)
+
+![binary .92](images/binary_rain_fog_3.png)
+
+![heatmap](images/heatmap.png)
 
 1. **Rethinking Atrous Convolution for Semantic Image Segmentation** <br/>
     Liang-Chieh Chen, George Papandreou, Florian Schroff, Hartwig Adam. <br/>
@@ -26,3 +42,7 @@ I'm still running, on my cpu, really slow...
 4. **The Cityscapes Dataset for Semantic Urban Scene Understanding** <br/>
     Cordts, Marius, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, Bernt Schiele.  <br/>
     [[link]](https://www.cityscapes-dataset.com/). In CVPR, 2016.
+
+Python 3.7 <br/>
+GPU=RTX 3080 <br/>
+tensorflow==2.7.3
