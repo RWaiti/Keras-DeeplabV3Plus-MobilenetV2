@@ -19,13 +19,13 @@
 ## mIOU and plots <br/>
 *Mean of all validation images mIOU = .97*
 
-![binary .96](images/binary_rain_fog_1.png)
+![binary .96](images/binary_rain_fog_1.jpg)
 
-![binary .98](images/binary_rain_fog_2.png)
+![binary .98](images/binary_rain_fog_2.jpg)
 
-![binary .92](images/binary_rain_fog_3.png)
+![binary .92](images/binary_rain_fog_3.jpg)
 
-![heatmap](images/heatmap.png)
+![heatmap](images/heatmap.jpg)
 
 1. **Rethinking Atrous Convolution for Semantic Image Segmentation** <br/>
     Liang-Chieh Chen, George Papandreou, Florian Schroff, Hartwig Adam. <br/>
