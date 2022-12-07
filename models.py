@@ -19,13 +19,13 @@ from tensorflow.keras import layers
 from tensorflow.keras import Model
 from tensorflow.keras import Input
 
-def deeplabV3(image_size=256, num_classes=20, alpha=1., with_argmax=False):
+def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
     """ Returns a model with MobineNetv2 backbone encoder and a DeeplabV3Plus decoder.
         Args:
-            image_size - int - Input image size (image_size, image_size, channels)
-            num_classes - int - Number of classes in output
+            imageSize - int - Input image size (imageSize, imageSize, channels)
+            nClasses - int - Number of classes in output
             alpha - float - Alpha value for the MobileNetV2 backbone
-            with_argmax - bool - If True, the model will output the argmax(image_size, image_size, classes), otherwise the reshaped output(image_size * image_size, num_classes)
+            withArgmax - bool - If True, the model will output the argmax(imageSize, imageSize, classes), otherwise the reshaped output(imageSize * imageSize, nClasses)
     """
     def convolution_block(block_input, num_filters=256,
                           kernel_size=3, dilation_rate=1,
@@ -96,15 +96,15 @@ def deeplabV3(image_size=256, num_classes=20, alpha=1., with_argmax=False):
 
         return layers.Dropout(.1, name="aspp_Dropout")(aspp_output)
 
-    def DeeplabV3PlusMobileNetv2(image_size, num_classes):
+    def DeeplabV3PlusMobileNetv2(imageSize, nClasses):
         """ Returns a DeeplabV3Plus model with the following structure:
             Args:
-                image_size - int - Input image size (image_size, image_size, channels)
-                num_classes - int - Number of classes in output
+                imageSize - int - Input image size (imageSize, imageSize, channels)
+                nClasses - int - Number of classes in output
             Returns:
                 model - Keras model
         """
-        model_input = Input(shape=(image_size, image_size, 3))
+        model_input = Input(shape=(imageSize, imageSize, 3))
         mobilenetv2 = MobileNetV2(weights="imagenet", include_top=False,
                                   input_tensor=model_input, alpha=alpha)
 
@@ -128,33 +128,33 @@ def deeplabV3(image_size=256, num_classes=20, alpha=1., with_argmax=False):
         x = convolution_block(x, kernel_size=1, name="depthwise_separable_")
         x = layers.Dropout(.1, name="depthwise_separable_Dropout")(x)
 
-        x = layers.Conv2D(num_classes, kernel_size=1,
-                          padding="same", name="num_classes_Conv2D")(x)
+        x = layers.Conv2D(nClasses, kernel_size=1,
+                          padding="same", name="nClasses_Conv2D")(x)
 
         x = layers.UpSampling2D(
-            size=(image_size // x.shape[1], image_size // x.shape[2]),
+            size=(imageSize // x.shape[1], imageSize // x.shape[2]),
             interpolation="bilinear", name="output_UpSampling"
         )(x)
 
         x = layers.Activation(activation='softmax', name="softmax")(x)
 
-        if with_argmax:
+        if withArgmax:
             x = layers.Lambda(lambda x: K.argmax(x, axis=-1), name="argmax")(x)
         else:
             x = layers.Reshape((x.shape[1] * x.shape[2], x.shape[3]), name="output")(x)
 
         return Model(inputs=model_input, outputs=x, name="DeepLabV3Plus.py")
 
-    return DeeplabV3PlusMobileNetv2(image_size, num_classes)
+    return DeeplabV3PlusMobileNetv2(imageSize, nClasses)
 
 
-def deeplabV3_no_skip(image_size=256, num_classes=20, alpha=1., with_argmax=False):
+def deeplabV3_no_skip(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
     """ Returns a model with MobineNetv2 backbone encoder and a DeeplabV3Plus decoder.
     Args:
-        image_size - int - Input image size (image_size, image_size, channels)
-        num_classes - int - Number of classes in output
+        imageSize - int - Input image size (imageSize, imageSize, channels)
+        nClasses - int - Number of classes in output
         alpha - float - Alpha value for the MobileNetV2 backbone
-        with_argmax - bool - If True, the model will output the argmax(image_size, image_size, classes), otherwise the reshaped output(image_size * image_size, num_classes)
+        withArgmax - bool - If True, the model will output the argmax(imageSize, imageSize, classes), otherwise the reshaped output(imageSize * imageSize, nClasses)
     """
 
     def convolution_block(block_input, num_filters=256,
@@ -226,15 +226,15 @@ def deeplabV3_no_skip(image_size=256, num_classes=20, alpha=1., with_argmax=Fals
 
         return layers.Dropout(.1, name="aspp_Dropout")(aspp_output)
 
-    def DeeplabV3PlusMobileNetv2(image_size, num_classes):
+    def DeeplabV3PlusMobileNetv2(imageSize, nClasses):
         """ Returns a DeeplabV3Plus model with the following structure:
             Args:
-                image_size - int - Input image size (image_size, image_size, channels)
-                num_classes - int - Number of classes in output
+                imageSize - int - Input image size (imageSize, imageSize, channels)
+                nClasses - int - Number of classes in output
             Returns:
                 model - Keras model
         """
-        model_input = Input(shape=(image_size, image_size, 3))
+        model_input = Input(shape=(imageSize, imageSize, 3))
         mobilenetv2 = MobileNetV2(weights="imagenet", include_top=False,
                                   input_tensor=model_input, alpha=alpha)
 
@@ -245,21 +245,21 @@ def deeplabV3_no_skip(image_size=256, num_classes=20, alpha=1., with_argmax=Fals
         x = convolution_block(x, kernel_size=1, name="depthwise_separable_")
         x = layers.Dropout(.1, name="depthwise_separable_Dropout")(x)
 
-        x = layers.Conv2D(num_classes, kernel_size=1,
-                          padding="same", name="num_classes_Conv2D")(x)
+        x = layers.Conv2D(nClasses, kernel_size=1,
+                          padding="same", name="nClasses_Conv2D")(x)
 
         x = layers.UpSampling2D(
-            size=(image_size // x.shape[1], image_size // x.shape[2]),
+            size=(imageSize // x.shape[1], imageSize // x.shape[2]),
             interpolation="bilinear", name="output_UpSampling"
         )(x)
 
         x = layers.Activation('softmax', name="softmax")(x)
 
-        if with_argmax:
+        if withArgmax:
             x = layers.Lambda(lambda x: K.argmax(x, axis=-1), name="argmax")(x)
         else:
             x = layers.Reshape((x.shape[1] * x.shape[2], x.shape[3]), name="output")(x)
 
         return Model(inputs=model_input, outputs=x, name="DeepLabV3Plus.py")
 
-    return DeeplabV3PlusMobileNetv2(image_size, num_classes)
+    return DeeplabV3PlusMobileNetv2(imageSize, nClasses)
