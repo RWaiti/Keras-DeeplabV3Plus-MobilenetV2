@@ -82,11 +82,11 @@ class DeeplabV3(tf.keras.Model):
                                                         mode="auto")
         callbacksList.append(checkpoint)
 
-        earlyStopping = tf.keras.callbacks.EarlyStopping(monitor=monitor, patience=1000)
+        earlyStopping = tf.keras.callbacks.EarlyStopping(monitor=monitor, patience=100)
         callbacksList.append(earlyStopping)
 
         reduceLROnPlateau = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor, factor=0.5,
-                                                                 patience=100, verbose=0,
+                                                                 patience=25, verbose=0,
                                                                  min_lr=5e-15)
         callbacksList.append(reduceLROnPlateau)
 
