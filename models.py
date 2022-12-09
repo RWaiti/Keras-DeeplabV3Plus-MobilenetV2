@@ -19,7 +19,7 @@ from tensorflow.keras import layers
 from tensorflow.keras import Model
 from tensorflow.keras import Input
 
-def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
+def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False, mobileLayers=None):
     """ Returns a model with MobineNetv2 backbone encoder and a DeeplabV3Plus decoder.
         Args:
             imageSize - int - Input image size (imageSize, imageSize, channels)
@@ -96,7 +96,7 @@ def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
 
         return layers.Dropout(.1, name="aspp_Dropout")(aspp_output)
 
-    def DeeplabV3PlusMobileNetv2(imageSize, nClasses):
+    def DeeplabV3PlusMobileNetv2(imageSize, nClasses, mobileLayers, alpha=1.):
         """ Returns a DeeplabV3Plus model with the following structure:
             Args:
                 imageSize - int - Input image size (imageSize, imageSize, channels)
@@ -108,8 +108,8 @@ def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
         mobilenetv2 = MobileNetV2(weights="imagenet", include_top=False,
                                   input_tensor=model_input, alpha=alpha)
 
-        input_a = ASPP(mobilenetv2.get_layer("block_12_project_BN").output)
-        input_b = mobilenetv2.get_layer("block_2_project_BN").output
+        input_a = ASPP(mobilenetv2.get_layer(mobileLayers["deepLayer"]).output)
+        input_b = mobilenetv2.get_layer(mobileLayers["shallowLayer"]).output
 
         input_a = layers.UpSampling2D(
             size=(input_b.shape[1] // input_a.shape[1],
@@ -144,11 +144,15 @@ def deeplabV3(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
             x = layers.Reshape((x.shape[1] * x.shape[2], x.shape[3]), name="output")(x)
 
         return Model(inputs=model_input, outputs=x, name="DeepLabV3Plus.py")
+    
+    if mobileLayers is None:
+        mobileLayers = {"shallowLayer": "block_2_project_BN", 
+                        "deepLayer": "block_12_project_BN"}
 
-    return DeeplabV3PlusMobileNetv2(imageSize, nClasses)
+    return DeeplabV3PlusMobileNetv2(imageSize=imageSize, nClasses=nClasses, mobileLayers=mobileLayers, alpha=alpha)
 
 
-def deeplabV3_no_skip(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
+def deeplabV3noSkip(imageSize=256, nClasses=20, alpha=1., withArgmax=False, mobileLayers=None):
     """ Returns a model with MobineNetv2 backbone encoder and a DeeplabV3Plus decoder.
     Args:
         imageSize - int - Input image size (imageSize, imageSize, channels)
@@ -226,7 +230,7 @@ def deeplabV3_no_skip(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
 
         return layers.Dropout(.1, name="aspp_Dropout")(aspp_output)
 
-    def DeeplabV3PlusMobileNetv2(imageSize, nClasses):
+    def DeeplabV3PlusMobileNetv2(imageSize, nClasses, mobileLayers, alpha=1.):
         """ Returns a DeeplabV3Plus model with the following structure:
             Args:
                 imageSize - int - Input image size (imageSize, imageSize, channels)
@@ -238,7 +242,7 @@ def deeplabV3_no_skip(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
         mobilenetv2 = MobileNetV2(weights="imagenet", include_top=False,
                                   input_tensor=model_input, alpha=alpha)
 
-        x = ASPP(mobilenetv2.get_layer("block_12_project_BN").output)
+        x = ASPP(mobilenetv2.get_layer(mobileLayers["deepLayer"]).output)
 
         x = layers.DepthwiseConv2D(
             kernel_size=3, padding="same", name="depthwise_separable_DepthwiseConv2D")(x)
@@ -260,6 +264,9 @@ def deeplabV3_no_skip(imageSize=256, nClasses=20, alpha=1., withArgmax=False):
         else:
             x = layers.Reshape((x.shape[1] * x.shape[2], x.shape[3]), name="output")(x)
 
-        return Model(inputs=model_input, outputs=x, name="DeepLabV3Plus.py")
+        return Model(inputs=model_input, outputs=x, name="DeepLabV3PlusNoSkip.py")
 
-    return DeeplabV3PlusMobileNetv2(imageSize, nClasses)
+    if mobileLayers is None:
+        mobileLayers = {"deepLayer": "block_12_project_BN"}
+
+    return DeeplabV3PlusMobileNetv2(imageSize=imageSize, nClasses=nClasses, mobileLayers=mobileLayers, alpha=alpha)

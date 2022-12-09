@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 from glob import glob
 from random import shuffle
-from tensorflow import cast, io, float32
-from tensorflow.image import stateless_random_crop, reshape, resize, decode_image
+from tensorflow import cast, io, float32, reshape
+from tensorflow.image import stateless_random_crop, resize, decode_image
 
 
 def getMaskData(maskPath, imgSize=(256, 256), nClasses=19, mapFunc=None, seed=None, crop=False, cropRandom=False):
@@ -77,5 +77,5 @@ def representativeDatasetGen(path=""):
         aux = resize(images=aux,
                               size=[256, 256]) / 127.5 - 1
         aux = cast(aux, float32)
-        
+
         yield [reshape(aux, (1, aux.shape[0], aux.shape[1], aux.shape[2]))]

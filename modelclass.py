@@ -7,7 +7,7 @@ import datetime
 import numpy as np
 
 class DeeplabV3(tf.keras.Model):
-    def __init__(self, imageSize=256, nClasses=30, alpha=1., path="model-saved", modelName="deeplabV3MobileNetV2", withArgmax=False, noSkip=False):
+    def __init__(self, imageSize=256, nClasses=30, alpha=1., path="model-saved", modelName="deeplabV3MobileNetV2", withArgmax=False, withSkip=True, mobileLayers=None):
         """ Initialize the model
             args:
                 imageSize: image size
@@ -25,18 +25,21 @@ class DeeplabV3(tf.keras.Model):
         self.nClasses = nClasses
         self.alpha = alpha
         self.modelName = os.path.join(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"), modelName)
-        self.path = os.path.join(path, modelName)
         self.model = None
         self.withArgmax = withArgmax
-        self.noSkip = noSkip
+        self.withSkip = withSkip
 
 
-        if self.noSkip:
-            self.model = models.deeplabV3(imageSize=self.imageSize, nClasses=self.nClasses,
-                                          alpha=self.alpha, withArgmax=withArgmax)
+        if self.withSkip:
+            self.modelName = self.modelName + "_Skip"
+            self.model = models.deeplabV3(imageSize=self.imageSize, nClasses=self.nClasses, alpha=self.alpha,
+                                                  withArgmax=withArgmax, mobileLayers=mobileLayers)
         else:
-            self.model = models.deeplabV3_no_skip(imageSize=self.imageSize, nClasses=self.nClasses,
-                                                  alpha=self.alpha, withArgmax=withArgmax)
+            self.modelName = self.modelName + "_noSkip"
+            self.model = models.deeplabV3noSkip(imageSize=self.imageSize, nClasses=self.nClasses, alpha=self.alpha,
+                                          withArgmax=withArgmax, mobileLayers=mobileLayers)
+
+        self.path = os.path.join(path, modelName)
 
     def call(self, inputs):
         return self.model(inputs)
