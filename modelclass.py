@@ -88,9 +88,9 @@ class DeeplabV3(tf.keras.Model):
         earlyStopping = tf.keras.callbacks.EarlyStopping(monitor=monitor, patience=100)
         callbacksList.append(earlyStopping)
 
-        reduceLROnPlateau = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor, factor=0.5,
+        reduceLROnPlateau = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor, factor=0.25,
                                                                  patience=25, verbose=0,
-                                                                 min_lr=5e-15)
+                                                                 min_lr=5e-10)
         callbacksList.append(reduceLROnPlateau)
 
         if log:

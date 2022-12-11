@@ -3,7 +3,7 @@ from os.path import join
 from glob import glob
 import random
 
-def getXY(path, extra=False, type="gtCoarse"):
+def getXY(path, type="gtCoarse", extra=False, fog=False):
     """ return a list of paths to the cityscapes X and Y data
 
     Args:
@@ -28,6 +28,12 @@ def getXY(path, extra=False, type="gtCoarse"):
         xTrainVal += sorted(glob(path.replace("__REPLACE__", "train_extra")))
         print("Getting extra train data from: " + path.replace("__REPLACE__", "train_extra"))
 
+    if fog:
+        xTrainVal += sorted(glob(path.replace("__REPLACE__", "train").replace(".png", "_foggy_beta_0.01.png")))
+        print("Getting foggy train data from: " + path.replace("__REPLACE__", "train"))
+        xTrainVal += sorted(glob(path.replace("__REPLACE__", "val").replace(".png", "_foggy_beta_0.01.png")))
+        print("Getting foggy train data from: " + path.replace("__REPLACE__", "val"))
+
     xTest = sorted(glob(path.replace("__REPLACE__", "test")))
     print("Getting test data from: " + path.replace("__REPLACE__", "test"))
 
@@ -37,7 +43,7 @@ def getXY(path, extra=False, type="gtCoarse"):
     return xTrainVal, yTrainVal, xTest, yTest
 
 
-def getY(data, type="gtCoarse"):
+def getY(data, type="gtCoarse", fog=False):
     """ return a list of paths to the data ground truth
 
     Args:
@@ -47,7 +53,11 @@ def getY(data, type="gtCoarse"):
     Returns:
         list: list of paths to the data ground truth in the form "dataPath" + "type" + "dataName"
     """
+    if fog:
+        yData = [i.replace("leftImg8bit_foggy_beta_0.01", type) for i in data]
+        
     yData = [i.replace("leftImg8bit", type) for i in data]
+
     return [i.replace("_" + type + ".png", "_" + type + "_labelIds.png") for i in yData]
 
 
