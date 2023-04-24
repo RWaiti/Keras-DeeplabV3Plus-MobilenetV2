@@ -82,8 +82,8 @@ for _dict in search_space:
     mobileLayers = {"shallowLayer": "block_2_project_BN",
                     "deepLayer": f"block_{deeplayer}_project_BN"}
     
-    # 20% of a train image be a fog image
-    # 33% of a train image to be flipped
+    # Train image has 1/5 chance to be a fog image
+    # Train image has 1/3 chance to be flipped
     train_val_folds = data_utils.load_dataset(
         train_val_X, train_val_Y, IMAGE_SIZE=IMG_SIZE, BATCH_SIZE=BATCH_SIZE, REMAP="binary",
         N_FOLDS=3, SEED=SEED, use_fog=True, flip=True)
