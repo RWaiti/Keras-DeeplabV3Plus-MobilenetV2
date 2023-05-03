@@ -10,6 +10,39 @@ from os import environ
 environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
+def preprocessing(frame):
+    frame = cv2.resize(frame, (input_w, input_h), interpolation=cv2.INTER_AREA).astype(float32)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = expand_dims(frame, axis=0)
+    return frame / 127.5 - 1
+
+def inference(pre_frame):
+    interpreter.set_tensor(input, pre_frame)
+    interpreter.invoke()
+    return interpreter.get_tensor(output)[0].astype(uint8)
+
+def postprocessing(mask):
+    # colorList = color_palette(None, 2)
+    # colorListAux = []
+
+    # for i in colorList:
+    #     colorListAux.append(int(i[0] * 255))
+    #     colorListAux.append(int(i[1] * 255))
+    #     colorListAux.append(int(i[2] * 255))
+    # colorList = None
+
+    # print(colorListAux)
+
+    mask = cv2.resize(mask, (camera_width, camera_height), interpolation=cv2.INTER_NEAREST)
+    mask = stack([mask] * 3, axis=-1)
+    mask[mask == 1] = 255
+    # mask = fromarray(mask, mode="P")
+    # mask.putpalette(colorListAux)
+    # mask = mask.convert("RGB")
+    return mask
+    # return cv2.addWeighted(frame, .75, asarray(mask), .25, 0)
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
@@ -38,38 +71,6 @@ if __name__ == '__main__':
     output = output['index']
     input = input['index']
 
-    # colorList = color_palette(None, 2)
-    # colorListAux = []
-
-    # for i in colorList:
-    #     colorListAux.append(int(i[0] * 255))
-    #     colorListAux.append(int(i[1] * 255))
-    #     colorListAux.append(int(i[2] * 255))
-    # colorList = None
-
-    # print(colorListAux)
-
-    def preprocessing(frame):
-        frame = cv2.resize(frame, (input_w, input_h), interpolation=cv2.INTER_AREA).astype(float32)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = expand_dims(frame, axis=0)
-        return frame / 127.5 - 1
-
-    def inference(pre_frame):
-        interpreter.set_tensor(input, pre_frame)
-        interpreter.invoke()
-        return interpreter.get_tensor(output)[0].astype(uint8)
-
-    def posprocessing(mask):
-        mask = cv2.resize(mask, (camera_width, camera_height), interpolation=cv2.INTER_NEAREST)
-        mask = stack([mask] * 3, axis=-1)
-        mask[mask == 1] = 255
-        # mask = fromarray(mask, mode="P")
-        # mask.putpalette(colorListAux)
-        # mask = mask.convert("RGB")
-        return mask
-        # return asarray(mask)
-
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FPS, cam_fps)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_width)
@@ -84,10 +85,7 @@ if __name__ == '__main__':
 
         pre_frame = preprocessing(frame)
         mask = inference(pre_frame)
-        # mask = posprocessing(mask)
-
-        # image = cv2.addWeighted(frame, .75, mask, .25, 0)
-        # image = mask
+        # image = postprocessing(frame, mask)
 
         fps = str(1 / (time() - frame_time))
 

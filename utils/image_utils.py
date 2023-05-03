@@ -78,17 +78,18 @@ def load_img(path, size=None, SEED=None, CROP=False, FLIP=False):
                       constant_values=0, interpolation="bilinear")
 
 
-def representative_datagen(path="", size=[256, 256]):
-    paths = os.path.join(path, "leftImg8bit", "train", "*", "*", "*_leftImg8bit.png")
+class BatchGenerator():
+    def __init__(self, path=""):
+        self.images = glob(path)
+        print(len(self.images))
+        shuffle(self.images)
+        self.images = self.images[0:75]
+        print(len(self.images))
 
-    images = glob(paths)
-    shuffle(images)
-    images = images[0:75]
+    def __call__(self):
+        for img in self.images:
+            img = cv2.imread(img, cv2.IMREAD_COLOR)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = np.asarray(img, dtype="float32" ) / 127.5 - 1.
 
-    for img in images:
-        img = cv2.imread(img, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = resize(images=img, size=size, interpolation="bilinear") / 127.5 - 1.
-        img = cast(img, float32)
-
-        yield [reshape(img, (1, img.shape[0], img.shape[1], img.shape[2]))]
+            yield [reshape(img, (1, img.shape[0], img.shape[1], img.shape[2]))]
