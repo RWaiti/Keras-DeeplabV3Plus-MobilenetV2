@@ -1,11 +1,7 @@
 from os import environ, path
 environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-import tensorflow as tf
 from tensorflow.keras import callbacks
-from tensorflow import lite as tflite
-
-
 
 def callbacks_func(savePath, monitor="val_loss"):
     callbacksList = []
@@ -24,6 +20,8 @@ def callbacks_func(savePath, monitor="val_loss"):
 
     return callbacksList
 
+from tensorflow import lite as tflite
+
 def toTFlite(
         model, savePath, representativeDatasetGen,
         supportedOps = [tflite.OpsSet.SELECT_TF_OPS,
@@ -38,3 +36,24 @@ def toTFlite(
 
     with open(savePath + ".tflite", "wb") as f:
         f.write(tflite_model)
+
+from glob import glob
+from numpy import asarray
+from random import shuffle
+from tensorflow import cast, float32, reshape, Tensor
+from cv2 import imread, cvtColor, IMREAD_COLOR, COLOR_BGR2RGB
+
+class BatchGenerator():
+    def __init__(self, images=None):
+        assert isinstance(images, list)
+
+        shuffle(images)
+        self.images = images[0:75]
+
+    def __call__(self):
+        for img in self.images:
+            img = imread(img, IMREAD_COLOR)
+            img = cvtColor(img, COLOR_BGR2RGB)
+            img = asarray(img, dtype="float32" ) / 127.5 - 1.
+
+            yield [reshape(img, (1, img.shape[0], img.shape[1], img.shape[2]))]

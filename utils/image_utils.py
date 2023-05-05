@@ -76,20 +76,3 @@ def load_img(path, size=None, SEED=None, CROP=False, FLIP=False):
 
     return common_ops(img, size=size, SEED=SEED, CROP=CROP, FLIP=FLIP,
                       constant_values=0, interpolation="bilinear")
-
-
-class BatchGenerator():
-    def __init__(self, path=""):
-        self.images = glob(path)
-        print(len(self.images))
-        shuffle(self.images)
-        self.images = self.images[0:75]
-        print(len(self.images))
-
-    def __call__(self):
-        for img in self.images:
-            img = cv2.imread(img, cv2.IMREAD_COLOR)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = np.asarray(img, dtype="float32" ) / 127.5 - 1.
-
-            yield [reshape(img, (1, img.shape[0], img.shape[1], img.shape[2]))]
