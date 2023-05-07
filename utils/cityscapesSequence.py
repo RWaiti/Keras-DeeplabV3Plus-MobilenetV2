@@ -72,12 +72,13 @@ def cat_id_func(mask):
 class CitySequence(tf.keras.utils.Sequence):
     def __init__(
             self, x_dir, y_dir, batch_size=4, image_size=(256, 256),
-            remap="", use_fog=False, flip=False):
+            remap="", use_fog=False, CROP=False, flip=False):
         self.x_dir, self.y_dir = x_dir, y_dir
 
         self.labels = labels
         self.fog = use_fog
         self.flip = flip
+        self.CROP = CROP
 
         self.batch_size = batch_size
         self.image_size = image_size
@@ -123,13 +124,14 @@ class CitySequence(tf.keras.utils.Sequence):
         # expected already resized data
         for i, (img, mask) in enumerate(zip(batchX, batchY)):
             FLIP = True if self.flip and random.randint(1, 100) <= 33 else False
+            (CROP, SEED) = (True, random.randint(1, 100)) if (self.CROP and random.randint(1, 100) <= 33) else (False, 42)
 
             if self.fog and random.randint(1, 100) <= 20:
                 img = img.replace("img", "imgFog")
 
-            images[i] = image_utils.load_img(img, FLIP=FLIP) / 127.5 - 1 
+            images[i] = image_utils.load_img(img, CROP=CROP, SEED=SEED, FLIP=FLIP) / 127.5 - 1 
 
-            mask = image_utils.load_mask(mask, n_classes=self.n_classes, FLIP=FLIP).flatten()
+            mask = image_utils.load_mask(mask, n_classes=self.n_classes, CROP=CROP, SEED=SEED, FLIP=FLIP).flatten()
 
             masks[i] = np.expand_dims(mask, axis=-1)
             sample_weights[i] = self.__sample_weights(mask)

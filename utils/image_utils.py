@@ -7,18 +7,18 @@ from random import shuffle
 from tensorflow import cast, float32, reshape, Tensor
 from tensorflow.image import stateless_random_crop, flip_left_right, resize
 
-CROP_PERCENT = .85
+CROP_PERCENT = .75
 
 
 def common_ops(img, size=None, SEED=None, CROP=False, FLIP=False, constant_values=0, interpolation="bilinear"):
     width, height, n_channels = img.shape
 
     new_width, new_height = int(width * CROP_PERCENT), int(height * CROP_PERCENT)
-    pad_width, pad_height = (width - new_width) // 2, (height - new_height) // 2
+    pad_width, pad_height = int(np.ceil((width - new_width) / 2)), int(np.ceil((height - new_height) / 2))
 
     if CROP:
-        img = stateless_random_crop(img, (new_width, new_height, n_channels), seed=SEED)
-        # img = np.pad(img, [(pad_width, ), (pad_height, ), (0, )], mode='constant', constant_values=constant_values)
+        img = stateless_random_crop(img, (new_width, new_height, n_channels), seed=[SEED, SEED])
+        img = resize(img, (width, height), interpolation)
     if FLIP:
         img = flip_left_right(img)
     if size is not None:

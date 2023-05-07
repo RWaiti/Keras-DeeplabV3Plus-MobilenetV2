@@ -6,8 +6,8 @@ import tensorflow as tf
 import numpy as np
 
 class Losses_n_Metrics():
-    def __init__(self):
-        pass
+    def __init__(self, ignore_last=True):
+        self.ignore_last = ignore_last
 
     def diceAccuracy(self, y_true, y_pred, smooth=1):
         """ Dice loss - Ignore last class from true mask
@@ -22,7 +22,10 @@ class Losses_n_Metrics():
         nb_classes = K.int_shape(y_pred)[-1]
 
         y_true_f = K.one_hot(
-            tf.cast(y_true[:, :, 0], tf.int32), nb_classes + 1)[:, :, :-1]
+            tf.cast(y_true[:, :, 0], tf.int32), nb_classes + 1)
+        
+        if self.ignore_last:
+            y_true_f = y_true_f[:, :, :-1]
 
         y_true_f = K.batch_flatten(y_true_f)
         y_pred_f = K.batch_flatten(y_pred)
@@ -55,7 +58,10 @@ class Losses_n_Metrics():
         """
         nb_classes = K.int_shape(y_pred)[-1]
         y_true_f = K.one_hot(
-            tf.cast(y_true[:, :, 0], tf.int32), nb_classes + 1)[:, :, :-1]
+            tf.cast(y_true[:, :, 0], tf.int32), nb_classes + 1)
+
+        if self.ignore_last:
+            y_true_f = y_true_f[:, :, :-1]
 
         y_true_f = K.batch_flatten(y_true_f)
         y_pred_f = K.batch_flatten(y_pred)
