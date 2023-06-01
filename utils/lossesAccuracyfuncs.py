@@ -9,7 +9,7 @@ class Losses_n_Metrics():
     def __init__(self, ignore_last=True):
         self.ignore_last = ignore_last
 
-    def diceAccuracy(self, y_true, y_pred, smooth=1):
+    def dice_coef(self, y_true, y_pred, smooth=1):
         """ Dice loss - Ignore last class from true mask
             args:
                 y_true: ground truth 4D keras tensor (B,H,W,C)
@@ -35,8 +35,7 @@ class Losses_n_Metrics():
 
         return intersection / union
 
-
-    def diceLoss(self, y_true, y_pred):
+    def loss_dice_coef(self, y_true, y_pred):
         """ Dice loss 
             args:
                 y_true: ground truth 4D keras tensor (B,H,W,C)
@@ -44,34 +43,27 @@ class Losses_n_Metrics():
             return:
                 dice loss
         """
-        return 1 - self.diceAccuracy(y_true, y_pred)
+        return 1 - self.dice_coef(y_true, y_pred)
 
-
-    def jaccardDistance(self, y_true, y_pred, smooth=10):
-        """ Jaccard distance
-            args:
-                y_true: ground truth 4D keras tensor (B,H,W,C)
-                y_pred: predicted 4D keras tensor (B,H,W,C)
-                smooth: value to avoid division by zero
-            return:
-                jaccard distance
-        """
+    def iou_coef(self, y_true, y_pred, smooth=1):
         nb_classes = K.int_shape(y_pred)[-1]
+
         y_true_f = K.one_hot(
             tf.cast(y_true[:, :, 0], tf.int32), nb_classes + 1)
-
+        
         if self.ignore_last:
             y_true_f = y_true_f[:, :, :-1]
 
         y_true_f = K.batch_flatten(y_true_f)
         y_pred_f = K.batch_flatten(y_pred)
 
-        intersection = K.sum(K.abs(y_true_f * y_pred_f), axis=-1) + smooth
-        sum_ = K.sum(K.abs(y_true_f) + K.abs(y_pred_f), axis=-1) + smooth
-
-        jac = intersection / (sum_ - intersection)
-
-        return (1 - jac) * smooth
+        intersection = K.sum(K.abs(y_true_f * y_pred_f), axis=-1)
+        union = K.sum(y_true_f, axis=-1) + K.sum(y_pred_f, axis=-1) - intersection
+        iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
+        return iou
+    
+    def loss_iou_coef(self, y_true, y_pred):
+        return 1 - self.iou_coef(y_true, y_pred)
 
     def accuracy(self, y_true, y_pred):
         """ Accuracy = True Positive + True Negative / (True Positive + False Positive + True Negative + False Negative)

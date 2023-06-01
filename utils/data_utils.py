@@ -8,14 +8,14 @@ from sklearn.model_selection import KFold
 from utils.cityscapesSequence import CitySequence
 
 
-def load_datasetCV(X, Y, BATCH_SIZE=1, IMAGE_SIZE=(256, 256), REMAP="binary", N_FOLDS=5, SEED=42, use_fog=False, flip=False):
-    train_val_X, train_val_Y = data_shuffle(X, Y)
+def load_datasetCV(X, Y, BATCH_SIZE=1, IMAGE_SIZE=(240, 320), REMAP="binary", N_FOLDS=5, SEED=42):
+    train_val_X, train_val_Y = data_shuffle(X, Y, SEED)
     kfolds = split_kfold(train_val_X, train_val_Y, nSplits=N_FOLDS, seed=SEED)
 
     for (train_X, train_Y, val_X, val_Y) in kfolds:
         train_dataset = CitySequence(
             train_X, train_Y, image_size=IMAGE_SIZE, batch_size=BATCH_SIZE,
-            remap=REMAP, use_fog=use_fog, flip=flip)
+            remap=REMAP)
 
         val_dataset   = CitySequence(
             val_X, val_Y, image_size=IMAGE_SIZE, batch_size=BATCH_SIZE,
@@ -23,12 +23,13 @@ def load_datasetCV(X, Y, BATCH_SIZE=1, IMAGE_SIZE=(256, 256), REMAP="binary", N_
 
         yield train_dataset, val_dataset, train_dataset.n_classes
 
-def load_dataset(X, Y, BATCH_SIZE=1, IMAGE_SIZE=(256, 256), REMAP="binary", CROP=False, flip=False):
+def load_dataset(X, Y, BATCH_SIZE=1, IMAGE_SIZE=(240, 320), REMAP="binary", CROP=False,
+        HORIZONTAL_FLIP=False, VERTICAL_FLIP=False, BRIGHTNESS=False):
     return CitySequence(
         X, Y, image_size=IMAGE_SIZE, batch_size=BATCH_SIZE,
-            remap=REMAP, CROP=CROP, flip=flip)
+            remap=REMAP, CROP=CROP, VERTICAL_FLIP=VERTICAL_FLIP, BRIGHTNESS=BRIGHTNESS)
 
-def load_testset(X, Y, IMAGE_SIZE=(256, 256), BATCH_SIZE=1, REMAP="binary"):
+def load_testset(X, Y, IMAGE_SIZE=(240, 320), BATCH_SIZE=1, REMAP="binary"):
     return CitySequence(X, Y, image_size=IMAGE_SIZE, batch_size=BATCH_SIZE, remap=REMAP)
 
 

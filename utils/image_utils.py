@@ -3,34 +3,46 @@ import os
 import cv2
 import numpy as np
 from glob import glob
-from random import shuffle
+from random import shuffle, randint
 from tensorflow import cast, float32, reshape, Tensor
-from tensorflow.image import stateless_random_crop, flip_left_right, resize
+from tensorflow.image import stateless_random_crop, flip_left_right, resize, flip_up_down
 
 CROP_PERCENT = .75
 
 
-def common_ops(img, size=None, SEED=None, CROP=False, FLIP=False, constant_values=0, interpolation="bilinear"):
-    width, height, n_channels = img.shape
 
-    new_width, new_height = int(width * CROP_PERCENT), int(height * CROP_PERCENT)
-    pad_width, pad_height = int(np.ceil((width - new_width) / 2)), int(np.ceil((height - new_height) / 2))
+def common_ops(img, size, CROP=None, BRIGHTNESS=False, FLIP_HORIZONTAL=False,
+               FLIP_VERTICAL=False, interpolation="bilinear"):
+    height, width, n_channels = img.shape
 
-    if CROP:
-        img = stateless_random_crop(img, (new_width, new_height, n_channels), seed=[SEED, SEED])
-        img = resize(img, (width, height), interpolation)
-    if FLIP:
-        img = flip_left_right(img)
-    if size is not None:
+    if CROP != None:
+        img = img[CROP[0][0]:CROP[0][1], CROP[1][0]:CROP[1][1], :]
+
+    if img.shape != (size[0], size[1], 3):
         img = resize(img, size, interpolation)
+
+    if FLIP_HORIZONTAL:
+        img = flip_left_right(img)
+
+    if FLIP_VERTICAL:
+        img = flip_up_down(img)
 
     if isinstance(img, Tensor):
         img = img.numpy()
 
+    if BRIGHTNESS:
+        if randint(0, 1):
+            img = img + 32
+            img[img > 255] = 255
+        else:
+            img = img - 32
+            img[img < 0] = 0
+
     return img.astype(np.uint8)
 
 
-def load_mask(path, size=None, n_classes=19, map_func=None, SEED=None, CROP=False, FLIP=False):
+def load_mask(path, size, n_classes=2, map_func=None, CROP=None, FLIP_HORIZONTAL=False,
+              FLIP_VERTICAL=False):
     """ returns a mask with shape (size, size, n_classes)
 
     Args:
@@ -44,20 +56,21 @@ def load_mask(path, size=None, n_classes=19, map_func=None, SEED=None, CROP=Fals
     """
     mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-    mask = np.stack((mask,)*3, axis=-1)
-
-    mask = common_ops(mask, size=size, SEED=SEED, CROP=CROP, FLIP=FLIP,
-                      constant_values=n_classes, interpolation="nearest")[:, :, 0]
-
     if map_func is not None:
         mask = map_func(mask)
+
+    mask = np.stack((mask,)*3, axis=-1)
+
+    mask = common_ops(mask, size=size, CROP=CROP, FLIP_HORIZONTAL=False, FLIP_VERTICAL=False,
+                      interpolation="nearest")[:, :, 0]
 
     mask[mask >= n_classes] = n_classes
 
     return mask
 
 
-def load_img(path, size=None, SEED=None, CROP=False, FLIP=False):
+def load_img(path, size, CROP=None, BRIGHTNESS=False, FLIP_HORIZONTAL=False, 
+             FLIP_VERTICAL=False):
     """ returns an image with shape (size, size, n_channels)
 
     Args:
@@ -74,5 +87,6 @@ def load_img(path, size=None, SEED=None, CROP=False, FLIP=False):
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    return common_ops(img, size=size, SEED=SEED, CROP=CROP, FLIP=FLIP,
-                      constant_values=0, interpolation="bilinear")
+    return common_ops(img, size=size, CROP=CROP, FLIP_HORIZONTAL=FLIP_HORIZONTAL,
+                      FLIP_VERTICAL=FLIP_VERTICAL, BRIGHTNESS=BRIGHTNESS,
+                      interpolation="bilinear")

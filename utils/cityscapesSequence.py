@@ -53,7 +53,20 @@ def binary_func(mask):
     for label in labels:
         if label[0] == 'ground' or label[3] == 'ground':
             aux_mask[mask == label[1]] = 1
-        elif label[4] == 0:
+        elif label[1] in [1, 2, 3]:
+            aux_mask[mask == label[1]] = 2
+        else:
+            aux_mask[mask == label[1]] = 0
+
+    return aux_mask
+
+def binary_2_func(mask):
+    aux_mask = np.zeros_like(mask, dtype=np.int8)
+
+    for label in labels:
+        if label[0] == 'ground' or label[3] == 'ground':
+            aux_mask[mask == label[1]] = 1
+        elif label[1] in [2, 3]:
             aux_mask[mask == label[1]] = 2
         else:
             aux_mask[mask == label[1]] = 0
@@ -65,19 +78,22 @@ def cat_id_func(mask):
 
     for label in labels:
         aux_mask[mask == label[1]] = label[4] - 1
-        aux_mask[aux_mask == -1] = np.max(label[:, -1])
+
+    aux_mask[aux_mask == -1] = np.max(aux_mask) + 1
 
     return aux_mask
 
 class CitySequence(tf.keras.utils.Sequence):
     def __init__(
-            self, x_dir, y_dir, batch_size=4, image_size=(256, 256),
-            remap="", use_fog=False, CROP=False, flip=False):
+            self, x_dir: list[str], y_dir: list[str], batch_size=4, image_size=(256, 256),
+            remap="", BRIGHTNESS=False, CROP=False, VERTICAL_FLIP=False,
+            HORIZONTAL_FLIP=False):
         self.x_dir, self.y_dir = x_dir, y_dir
 
         self.labels = labels
-        self.fog = use_fog
-        self.flip = flip
+        self.BRIGHTNESS = BRIGHTNESS
+        self.VERTICAL_FLIP = VERTICAL_FLIP
+        self.HORIZONTAL_FLIP = HORIZONTAL_FLIP
         self.CROP = CROP
 
         self.batch_size = batch_size
@@ -89,6 +105,9 @@ class CitySequence(tf.keras.utils.Sequence):
         elif remap == "binary":
             self.n_classes = 2
             self.__remap_method = binary_func
+        elif remap == "binary_2":
+            self.n_classes = 2
+            self.__remap_method = binary_2_func
         else:
             self.n_classes = 19
             self.__remap_method = lambda x: x
@@ -96,22 +115,20 @@ class CitySequence(tf.keras.utils.Sequence):
     def __len__(self) -> int:
         return np.ceil(len(self.x_dir) / self.batch_size).astype(np.int32) 
 
-    def __sample_weights(self, mask):
-        aux_classes = np.unique(mask)
+    def __sample_weights(self, mask: np.ndarray):
+        uniques, counts = np.unique(mask, return_counts=True)
+        samples_weights = np.zeros_like(mask, dtype=np.float32)
 
-        if len(aux_classes):
-            sample_weight = np.ones_like(mask, dtype=np.float32)
+        counts[uniques >= self.n_classes] = 0.
 
-            weightsVector = class_weight.compute_class_weight(class_weight="balanced", classes=aux_classes, y=mask)
+        total = np.sum(counts)
 
-            for j, weight in zip(aux_classes, weightsVector):
-                sample_weight[mask == int(j)] = weight
+        percent = counts / total
 
-            sample_weight[mask >= self.n_classes] = 0.
-        else:
-            sample_weight = np.ones_like(mask, dtype=np.float32)
+        for i, weight in zip(uniques, percent):
+            samples_weights[mask == i] = weight
 
-        return np.expand_dims(sample_weight, axis=-1)
+        return np.expand_dims(samples_weights, axis=-1)
 
     def __getitem__(self, idx):
         batchX = self.x_dir[idx * self.batch_size:(idx + 1) * self.batch_size]
@@ -123,15 +140,33 @@ class CitySequence(tf.keras.utils.Sequence):
 
         # expected already resized data
         for i, (img, mask) in enumerate(zip(batchX, batchY)):
-            FLIP = True if self.flip and random.randint(1, 100) <= 33 else False
-            (CROP, SEED) = (True, random.randint(1, 100)) if (self.CROP and random.randint(1, 100) <= 33) else (False, 42)
+            FLIP_HORIZONTAL = True if (self.HORIZONTAL_FLIP and random.random() < 0.20) else False
+            FLIP_VERTICAL = True if (self.VERTICAL_FLIP and random.random() < 0.20) else False
+            BRIGHTNESS = True if (self.BRIGHTNESS and random.random() < 0.20) else False
+            CROP = None
 
-            if self.fog and random.randint(1, 100) <= 20:
-                img = img.replace("img", "imgFog")
+            if (self.CROP and random.random() < 0.20):
+                CROP_PERCENT = .75
 
-            images[i] = image_utils.load_img(img, CROP=CROP, SEED=SEED, FLIP=FLIP) / 127.5 - 1 
+                new_height, new_width = int(self.image_size[0] * CROP_PERCENT), int(self.image_size[1] * CROP_PERCENT)
 
-            mask = image_utils.load_mask(mask, n_classes=self.n_classes, CROP=CROP, SEED=SEED, FLIP=FLIP).flatten()
+                row_max = self.image_size[0]
+                col_max = self.image_size[1]
+                
+                row_left = random.randint(0, row_max-new_height)
+                row_right= new_height+row_left
+
+                col_upper = random.randint(0, col_max-new_width)
+                col_down = new_width+col_upper
+                CROP = [[row_left, row_right], [col_upper, col_down]]
+
+            images[i] = image_utils.load_img(
+                img, self.image_size, CROP=CROP, FLIP_HORIZONTAL=FLIP_HORIZONTAL,
+                FLIP_VERTICAL=FLIP_VERTICAL, BRIGHTNESS=BRIGHTNESS)
+
+            mask = image_utils.load_mask(
+                mask, self.image_size, n_classes=self.n_classes, CROP=CROP, 
+                FLIP_HORIZONTAL=FLIP_HORIZONTAL, FLIP_VERTICAL=FLIP_VERTICAL).flatten()
 
             masks[i] = np.expand_dims(mask, axis=-1)
             sample_weights[i] = self.__sample_weights(mask)

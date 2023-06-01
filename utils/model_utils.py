@@ -7,7 +7,7 @@ def callbacks_func(savePath, monitor="val_loss"):
     callbacksList = []
 
     callbacksList += [callbacks.EarlyStopping(
-        monitor=monitor, min_delta=0.0001, patience=140)]
+        monitor=monitor, min_delta=0.0001, patience=27)]
 
     callbacksList += [callbacks.ModelCheckpoint(
         savePath+".ckpt", monitor=monitor, verbose=1,
@@ -16,7 +16,7 @@ def callbacks_func(savePath, monitor="val_loss"):
     callbacksList += [callbacks.CSVLogger(filename=savePath+".csv")]
 
     callbacksList += [callbacks.ReduceLROnPlateau(
-        monitor=monitor, factor=0.50, patience=45, verbose=0)]
+        monitor=monitor, factor=0.50, patience=7, verbose=0)]
 
     return callbacksList
 
@@ -54,6 +54,17 @@ class BatchGenerator():
         for img in self.images:
             img = imread(img, IMREAD_COLOR)
             img = cvtColor(img, COLOR_BGR2RGB)
-            img = asarray(img, dtype="float32" ) / 127.5 - 1.
+            img = asarray(img, dtype="float32" )
 
             yield [reshape(img, (1, img.shape[0], img.shape[1], img.shape[2]))]
+
+from tensorflow.keras import backend as K
+from tensorflow.keras import Model, layers
+
+def lastLayerToArgMax(model):
+    model_input = model.layers[0].output
+
+    model_output = model.layers[-2].output
+    model_output = layers.Lambda(lambda x : K.argmax(x, axis=-1), name="argmax")(model_output)
+
+    return Model(inputs=model_input, outputs=model_output, name="DeepLabV3Plus")
