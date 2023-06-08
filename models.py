@@ -24,7 +24,7 @@ from tensorflow.keras import Input
 
 def deeplabV3(imageSize=(256, 256), nClasses=20, alpha=1., withArgmax=False,
               mobileLayers=None, kernel_regularizer=None, SEED=None,
-              kernel_initializer=None, frozen=False):
+              kernel_initializer=None, frozen=False,  TEST=False):
     """ Returns a model with MobineNetv2 backbone encoder and a DeeplabV3Plus decoder.
         Args:
             imageSize - int - Input image size (imageSize, imageSize, channels)
@@ -167,11 +167,23 @@ def deeplabV3(imageSize=(256, 256), nClasses=20, alpha=1., withArgmax=False,
     
         x = SeparableConv2D_block(x, kernel_size=3, name="output_")
 
+        if TEST:
+            x = SeparableConv2D_block(x, nClasses, kernel_size=3, name="output2_")
+        else:
+            x = layers.Conv2D(nClasses, kernel_size=1, padding="same",
+                              kernel_regularizer=kernel_regularizer,
+                          name="nClasses_Conv2D")(x) 
+
         x = layers.UpSampling2D(size = (4, 4), interpolation="bilinear",
                                 name="output_UpSampling")(x)
 
-        x = layers.Conv2D(nClasses, kernel_size=1, padding="same",
-                          name="nClasses_Conv2D")(x)
+        if TEST:
+            x = layers.SeparableConv2D(
+                nClasses, 1,
+                padding="same",
+                kernel_initializer=kernel_initializer,
+                kernel_regularizer=kernel_regularizer,
+                name="last_SeparableConv2D")(x)
 
         x = layers.Activation(activation='softmax', name="softmax")(x)
 

@@ -50,37 +50,46 @@ mobileLayers = {"shallowLayer": "block_2_project_BN",
                 "deepLayer": f"block_{deeplayer}_project_BN"}
 
 losses = lossesAccuracyfuncs.Losses_n_Metrics()
+jump = True
 
-train_val_folds = data_utils.load_datasetCV(
-    train_val_X, train_val_Y, IMAGE_SIZE=IMG_SIZE, BATCH_SIZE=BATCH_SIZE,
-    N_FOLDS=5, SEED=SEED)
+for TEST in [True, False]:
+    train_val_folds = data_utils.load_datasetCV(
+        train_val_X, train_val_Y, IMAGE_SIZE=IMG_SIZE, BATCH_SIZE=BATCH_SIZE,
+        N_FOLDS=5, SEED=SEED)
 
-for fold, (trainDataset, valDataset, n_classes) in enumerate(train_val_folds):
-    SAVE_PATH = f"model-saved/{MODEL_NAME}/NEW_2/kfold/layer_{deeplayer}_alpha_{alpha}_regularizer_l1_{l1}_l2_{l2}/{fold}"
+    for fold, (trainDataset, valDataset, n_classes) in enumerate(train_val_folds):
+        SAVE_PATH = f"model-saved/{MODEL_NAME}/NEW_3/kfold/{TEST.__str__()}/layer_{deeplayer}/alpha_{alpha}/{losses.loss_dice_coef.__name__}/l1_{l1}/l2_{l2}/{fold}"
+        print(MODEL_NAME)
+        print(f"lr: {lr} | alpha: {alpha} | deeplayer: {deeplayer}")
+        print(f"fold: {fold} | l1: {l1} | l2: {l2} | classes: {n_classes}")
 
-    print(MODEL_NAME)
-    print(f"lr: {lr} | alpha: {alpha} | deeplayer: {deeplayer}")
-    print(f"fold: {fold} | l1: {l1} | l2: {l2} | classes: {n_classes}")
+        # if fold == 2:
+        #     jump = False
+        # if jump:
+        #     continue
 
-    model = models.deeplabV3(
-        imageSize=IMG_SIZE, nClasses=n_classes, alpha=alpha, mobileLayers=mobileLayers,
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1, l2=l2), SEED=SEED)
+        model = models.deeplabV3(
+            imageSize=IMG_SIZE, nClasses=n_classes, alpha=alpha, mobileLayers=mobileLayers,
+            kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1, l2=l2), SEED=SEED, TEST=TEST)
 
-    model.compile(
-        optimizer=tf.keras.optimizers.experimental.AdamW(learning_rate=lr),
-        loss=losses.loss_dice_coef,
-        metrics=[losses.dice_coef, losses.iou_coef], sample_weight_mode="temporal")
+        model.compile(
+            optimizer=tf.keras.optimizers.experimental.AdamW(learning_rate=lr),
+            loss=losses.loss_dice_coef,
+            metrics=[losses.dice_coef, losses.iou_coef], sample_weight_mode="temporal")
 
-    history = model.fit(
-        x=trainDataset, validation_data=valDataset, batch_size=BATCH_SIZE, verbose=2,
-        epochs=epochs, callbacks=model_utils.callbacks_func(savePath=SAVE_PATH, monitor="val_loss"), 
-        workers=3, max_queue_size=30)
+        history = model.fit(
+            x=trainDataset, validation_data=valDataset, batch_size=BATCH_SIZE, verbose=2,
+            epochs=epochs, callbacks=model_utils.callbacks_func(savePath=SAVE_PATH, monitor="val_loss"), 
+            workers=3, max_queue_size=30)
+    exit(1)
 
 search_space = {
     "l2": [1e-2, 1e-3, 1e-4],
-    "loss": [losses.loss_dice_coef, losses.loss_iou_coef]}
+    # "loss": [losses.loss_dice_coef, losses.loss_iou_coef],
+    "loss": [losses.loss_dice_coef],
+    "TEST":[True, False]}
 
-all_iter = 3 * 2
+all_iter = 3 * 2 * 2
 n_iter = int(ceil(all_iter * 1.)) # 100%
 
 print(all_iter, n_iter)
@@ -93,6 +102,7 @@ for _dict in search_space:
 for _dict in search_space:
     l2 = _dict["l2"]
     loss = _dict["loss"]
+    TEST = _dict["TEST"]
 
     mobileLayers = {
         "shallowLayer": "block_2_project_BN",
@@ -107,7 +117,7 @@ for _dict in search_space:
     testData = data_utils.load_testset(
         test_X, test_Y, IMAGE_SIZE=IMG_SIZE, BATCH_SIZE=BATCH_SIZE)
 
-    SAVE_PATH = f"model-saved/{MODEL_NAME}/NEW_2/GRID_SEARCH/layer_{deeplayer}_{loss.__name__}_alpha_{alpha}_regularizer_l1_{l1}_l2_{l2}/grid_search"
+    SAVE_PATH = f"model-saved/{MODEL_NAME}/NEW_3/GRID_SEARCH/{TEST.__str__()}/layer_{deeplayer}/alpha_{alpha}/{loss.__name__}/l1_{l1}/l2_{l2}/grid_search"
 
     print(MODEL_NAME)
     print(f"lr: {lr} | alpha: {alpha} | deeplayer: {deeplayer}")
@@ -115,7 +125,7 @@ for _dict in search_space:
 
     model = models.deeplabV3(
         imageSize=IMG_SIZE, nClasses=n_classes, alpha=alpha, mobileLayers=mobileLayers,
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1, l2=l2), SEED=SEED)
+        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1, l2=l2), SEED=SEED, TEST=TEST)
 
     model.compile(
         optimizer=tf.keras.optimizers.experimental.AdamW(learning_rate=lr),

@@ -35,18 +35,15 @@ print(len(train_X), len(train_Y))
 print(len(test_X), len(test_Y))
 
 def runModel(
-        IMG_SIZE, _deeplayer, _loss, _lr, _l1, _l2, _alpha, _n_classes, batchSize,
-        VERTICAL_FLIP):
-
-    MODEL_NAME = "deeplabV3+_mobileNetV2"
-
+        IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize,
+        VERTICAL_FLIP, max_queue_size, TEST):
     epochs = 1000
     SEED = 42
 
     mobileLayers = {"shallowLayer": "block_2_project_BN",
-                "deepLayer": f"block_{_deeplayer}_project_BN"}
+                "deepLayer": f"block_{deeplayer}_project_BN"}
 
-    SAVE_PATH = f"model-saved/{MODEL_NAME}/NEW_2/LAST_MODEL/VERTICAL_FLIP_{VERTICAL_FLIP}/last_model"
+    SAVE_PATH = f"model-saved/deeplabV3+_mobileNetV2/NEW_3/LAST_MODEL/{TEST.__str__()}/layer_{deeplayer}/alpha_{alpha}/{loss.__name__}/l1_{l1}/l2_{l2}/VERTICAL_FLIP_{VERTICAL_FLIP}"
 
     # Train image has 20% chance to be vertically flipped
     # Train image has 20% chance to be horizontally flipped
@@ -60,33 +57,40 @@ def runModel(
         test_X, test_Y, IMAGE_SIZE=IMG_SIZE, BATCH_SIZE=batchSize)
 
     model = models.deeplabV3(
-        imageSize=IMG_SIZE, nClasses=_n_classes, alpha=_alpha, mobileLayers=mobileLayers,
-        kernel_regularizer=tf.keras.regularizers.L1L2(l1=_l1, l2=_l2), SEED=SEED)
+        imageSize=IMG_SIZE, nClasses=n_classes, alpha=alpha, mobileLayers=mobileLayers,
+        kernel_regularizer=tf.keras.regularizers.L1L2(l1=l1, l2=l2), SEED=SEED, TEST=TEST)
 
     losses = lossesAccuracyfuncs.Losses_n_Metrics()
 
     model.compile(
-        optimizer=tf.keras.optimizers.experimental.AdamW(learning_rate=_lr),
-        loss=_loss,
+        optimizer=tf.keras.optimizers.experimental.AdamW(learning_rate=lr),
+        loss=loss,
         metrics=[losses.dice_coef, losses.iou_coef], sample_weight_mode="temporal")
 
     history = model.fit(
         x=trainDataset, validation_data=testData, batch_size=batchSize, verbose=2,
         epochs=epochs, callbacks=model_utils.callbacks_func(savePath=SAVE_PATH, monitor="val_loss"), 
-        workers=3, max_queue_size=30)
+        workers=3, max_queue_size=max_queue_size)
 
 l1 = 1e-6
-l2 = 1e-3
+l2 = 1e-4
 lr = 1e-3
-alpha = .5
-n_classes = 2
 batchSize = 2
+n_classes = 2
 deeplayer = 12
 IMG_SIZE = (240, 320)
-loss = lossesAccuracyfuncs.Losses_n_Metrics().loss_iou_coef
+loss = lossesAccuracyfuncs.Losses_n_Metrics().loss_dice_coef
 
+alpha = 0.5
+
+# TEST = True
+# VERTICAL_FLIP = True
+# runModel(IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize, VERTICAL_FLIP, 30, TEST)
+
+# VERTICAL_FLIP = False
+# runModel(IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize, VERTICAL_FLIP, 30, TEST)
+
+l2 = 1e-3
+TEST = False
 VERTICAL_FLIP = True
-runModel(IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize, VERTICAL_FLIP)
-
-VERTICAL_FLIP = False
-runModel(IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize, VERTICAL_FLIP)
+runModel(IMG_SIZE, deeplayer, loss, lr, l1, l2, alpha, n_classes, batchSize, VERTICAL_FLIP, 30, TEST)
