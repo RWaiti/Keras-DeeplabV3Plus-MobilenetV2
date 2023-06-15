@@ -1,0 +1,7 @@
+loss,test,l2,train_mean,train_std,val_mean,val_std
+loss_dice_coef,None,0.0001,0.9063,0.0286,0.8904,0.0349
+loss_dice_coef,None,0.01,0.9062,0.0284,0.8902,0.0347
+loss_dice_coef,None,1e-06,0.9063,0.0287,0.8895,0.0356
+loss_iou_coef,None,0.0001,0.9057,0.0286,0.8898,0.0348
+loss_iou_coef,None,0.01,0.9066,0.0287,0.8907,0.0340
+loss_iou_coef,None,1e-06,0.9072,0.0284,0.8904,0.0346
